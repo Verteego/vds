@@ -1,0 +1,8 @@
+.idea
+.vagrant
+.bundle
+*.retry
+/deployment/ansible/files/*.json
+vagrant_1.8.0_x86_64.deb
+venv
+configuration

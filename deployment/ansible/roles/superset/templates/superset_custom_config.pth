@@ -1,0 +1,2 @@
+# This file shoud be added to site-packages of virtualenv so that superset_config can be loaded at superset launch
+/opt/superset/superset_config

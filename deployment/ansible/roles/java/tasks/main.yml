@@ -1,0 +1,14 @@
+---
+- include: add-repository-on-debian.yml
+
+- name: Accept Java 8 License
+  become: yes
+  debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+
+- name: Install Oracle Java 8
+  become: yes
+  apt: name={{item}} state=latest update_cache=yes cache_valid_time=3600
+  with_items:
+    - oracle-java8-installer
+    - ca-certificates
+    - oracle-java8-set-default

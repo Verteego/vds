@@ -1,0 +1,6 @@
+- name: Setup superset
+  hosts: Cluster
+  become: yes
+  become_user: root
+  roles:
+    - superset

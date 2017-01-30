@@ -1,0 +1,40 @@
+---
+- name: Setup working directory
+  file:
+    owner: openrefine
+    group: openrefine
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /opt/openrefine
+
+- name: Setup logging directory
+  file:
+    owner: openrefine
+    group: openrefine
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /var/log/openrefine
+
+- unarchive:
+    extra_opts: ['--strip=1']
+    src: https://storage.googleapis.com/verteego-vds/openrefine/dist/openrefine-linux-1.0.tar.gz
+    owner: openrefine
+    group: openrefine
+    dest: /opt/openrefine
+    remote_src: True
+
+- name: Copy openrefine service script
+  template: src={{item.src}} dest={{item.dest}} mode='u=rwx,g=rx,o=rx'
+  with_items:
+    - { src: 'templates/systemd/openrefine.service.j2', dest: '/lib/systemd/system/openrefine.service'}
+
+- name: enable openrefine service at startup
+  systemd:
+    name: openrefine
+    enabled: yes
+    masked: no
+
+- systemd:
+    state: restarted
+    daemon_reload: yes
+    name: openrefine

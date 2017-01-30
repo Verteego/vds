@@ -1,0 +1,10 @@
+[Unit]
+Description=Nifi server
+[Service]
+User=nifi
+Group=nifi
+PIDFile=/var/run/nifi.pid
+ExecStart=/opt/nifi/bin/nifi.sh run
+ExecStop=/opt/nifi/bin/nifi.sh stop
+[Install]
+WantedBy=multi-user.target

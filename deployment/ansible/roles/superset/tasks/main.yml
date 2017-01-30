@@ -1,0 +1,84 @@
+---
+- name: Setup working directory
+  file:
+    owner: superset
+    group: superset
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /opt/superset
+
+- name: Setup logging directory
+  file:
+    owner: superset
+    group: superset
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /var/log/superset
+
+- command: /bin/rm -rf /opt/superset/venv
+
+- name: create virtualenv
+  command: virtualenv /opt/superset/venv --system-site-packages -p python2.7
+  become: yes
+  become_user: superset
+
+- pip:
+    name: https://storage.googleapis.com/verteego-vds/superset/dist/superset-0.15.0.tar.gz
+    virtualenv: /opt/superset/venv
+    virtualenv_site_packages: yes
+  become: yes
+  become_user: superset
+
+- file: path=/home/superset/.superset/superset.db state=absent
+
+- expect:
+    command: /opt/superset/venv/bin/fabmanager create-admin --app superset
+    timeout: 120
+    responses:
+      (?i)username.*: "{{ superset.admin.username }}"
+      (?i)first.*: "{{ superset.admin.first_name }}"
+      (?i)last.*: "{{ superset.admin.last_name }}"
+      (?i)email.*: "{{ superset.admin.email }}"
+      (?i)password.*: "{{ superset.admin.password }}"
+      (?i)repeat.*: "{{ superset.admin.password }}"
+  become: yes
+  become_user: superset
+
+- name:
+  command: /opt/superset/venv/bin/superset db upgrade
+  become: yes
+  become_user: superset
+
+- name:
+  command: /opt/superset/venv/bin/superset init
+  become: yes
+  become_user: superset
+
+- name: Copy superset service script
+  template: src={{item.src}} dest={{item.dest}} mode='u=rwx,g=rx,o=rx'
+  with_items:
+    - { src: 'templates/systemd/superset.service.j2', dest: '/lib/systemd/system/superset.service'}
+
+- name: copy superset config
+  copy:
+    src: ../templates/superset_config
+    dest: /opt/superset/
+  become: yes
+  become_user: superset
+
+- name: Add superset config to virtualenv PYTHONPATH
+  template: src={{item.src}} dest={{item.dest}}
+  with_items:
+    - { src: 'templates/superset_custom_config.pth', dest: '/opt/superset/venv/lib/python2.7/site-packages', owner: superset, group: superset}
+    - { src: 'templates/superset_config/superset_config.py.j2', dest: '/opt/superset/superset_config/superset_config.py', owner: superset, group: superset}
+
+- name: enable superset service at startup
+  systemd:
+    name: superset
+    enabled: yes
+    masked: no
+
+- systemd:
+    state: restarted
+    daemon_reload: yes
+    name: superset

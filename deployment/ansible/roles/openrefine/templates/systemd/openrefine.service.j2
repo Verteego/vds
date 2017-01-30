@@ -1,0 +1,10 @@
+[Unit]
+Description=Openrefine server
+[Service]
+User=openrefine
+Group=openrefine
+PIDFile=/var/run/openrefine.pid
+ExecStart=/opt/openrefine/refine -p {{ openrefine.host.port }} -i {{ openrefine.host.ip }}
+ExecStop=/bin/kill -HUP $MAINPID
+[Install]
+WantedBy=multi-user.target

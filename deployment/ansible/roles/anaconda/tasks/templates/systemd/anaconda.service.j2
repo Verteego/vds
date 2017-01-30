@@ -1,0 +1,12 @@
+[Unit]
+Description=Anaconda server
+[Service]
+User=anaconda
+Group=anaconda
+PIDFile=/var/run/anaconda.pid
+Environment="PATH=/opt/anaconda/anaconda3/bin:$PATH"
+ExecStartPre="PATH=/opt/anaconda/anaconda3/bin:$PATH"
+ExecStart=/opt/anaconda/anaconda3/bin/jupyter-notebook
+ExecStop=/bin/kill -HUP $MAINPID
+[Install]
+WantedBy=multi-user.target

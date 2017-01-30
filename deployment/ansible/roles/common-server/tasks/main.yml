@@ -1,0 +1,113 @@
+---
+- name: Install common packages
+  action: apt pkg={{ item }} state=present update_cache=true
+  with_items:
+    - python-software-properties
+    - software-properties-common
+    - debian-archive-keyring
+    - apt-transport-https
+    - ntp
+    - build-essential
+    - libssl-dev
+    - libffi-dev
+    - python-dev
+    - python-pip
+    - libsasl2-dev
+    - libldap2-dev
+    - python-setuptools
+    - python-virtualenv
+    - python-pip
+    - python-numpy
+    - python-scipy
+    - htop
+    - tmux
+    - iotop
+    - git
+
+- pip:
+    name: six
+    version: 1.10.0
+
+- pip:
+    name: packaging
+
+- pip:
+    name: appdirs
+
+- pip:
+    name: pandas
+    version: 0.18.1
+
+- pip:
+    name: pexpect
+    version: 4.2
+
+- pip:
+    name: cffi
+    state: latest
+    extra_args : -U
+
+## LIMITS
+- name: Setup limits.conf
+  template: src=limits.j2 dest=/etc/security/limits.conf owner=root group=root mode=0644
+
+## LOCALE
+- name: Default locale
+  template: src=locale.j2 dest=/etc/default/locale owner=root group=root mode=0644
+
+
+## Timezone
+- name: Set timezone variables
+  template: src=timezone.j2 dest=/etc/timezone owner=root group=root mode=0644
+  notify: update timezone
+
+## Create system user for vds applications
+- group: name=superset state=present gid=13500
+- name: Allow 'superset' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%superset'
+    line: '%superset ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+- user: name=superset state=present uid=13500 groups=superset shell=/bin/bash
+
+- group: name=nifi state=present gid=13501
+- name: Allow 'nifi' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%nifi'
+    line: '%nifi ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+- user: name=nifi state=present uid=13501 groups=nifi shell=/bin/bash
+
+- group: name=openrefine state=present gid=13502
+- name: Allow 'openrefine' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%openrefine'
+    line: '%openrefine ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+- user: name=openrefine state=present uid=13502 groups=openrefine shell=/bin/bash
+
+- group: name=h2o state=present gid=13503
+- name: Allow 'h2o' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%h2o'
+    line: '%h2o ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+- user: name=h2o state=present uid=13503 groups=h2o shell=/bin/bash
+
+- group: name=anaconda state=present gid=13505
+- name: Allow 'anaconda' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%anaconda'
+    line: '%anaconda ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+- user: name=anaconda state=present uid=13505 groups=anaconda shell=/bin/bash

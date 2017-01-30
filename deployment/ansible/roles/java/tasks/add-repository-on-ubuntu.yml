@@ -1,0 +1,12 @@
+---
+- name: Update package list
+  apt: update_cache=yes cache_valid_time=3600
+  become: yes
+
+- name: Install add-apt-repostory
+  become: yes
+  apt: name=software-properties-common state=latest
+
+- name: Add Oracle Java Repository
+  become: yes
+  apt_repository: repo='ppa:webupd8team/java'

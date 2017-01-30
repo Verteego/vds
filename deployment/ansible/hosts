@@ -1,0 +1,2 @@
+[Cluster]
+vds.verteego.local vname=vds.verteego.local localip=192.168.90.123 ansible_host=vds

@@ -1,0 +1,10 @@
+[Unit]
+Description=H2O server
+[Service]
+User=h2o
+Group=h2o
+PIDFile=/var/run/h2o.pid
+ExecStart=/usr/bin/java -Xmx{{ h2o.java.Xmx }} -jar /opt/h2o/h2o.jar -port {{ h2o.host.port }} -log_dir {{ h2o.log_dir }}
+ExecStop=/bin/kill -HUP $MAINPID
+[Install]
+WantedBy=multi-user.target

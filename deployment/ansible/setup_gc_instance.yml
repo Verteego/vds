@@ -1,0 +1,69 @@
+---
+- name: Compute Engine Instance Examples
+  hosts: localhost
+  vars:
+    machine_type: "{{ gmachine_type | default('n1-standard-1') }}"
+    zone: "{{ gzone | default('europe-west1-d') }}"
+    disk_size: "{{ gdisk_size | default(20) }}"
+    disk_name: "{{ gdisk_name | default('custom-disk-1') }}"
+    image: debian-8-jessie-v20161215
+    credentials_file: "files/ansible.json"
+  tasks:
+    - shell: cat "{{ credentials_file }}"
+      register: result
+    - set_fact: gcloud="{{ result.stdout | from_json }}"
+    - debug: var=gcloud.client_email
+
+    - name: Make boot disk
+      gce_pd:
+        disk_type: pd-standard
+        image: "{{ image }}"
+        name: "{{ disk_name }}"
+        size_gb: "{{ disk_size }}"
+        state: present
+        service_account_email: "{{ gcloud.client_email }}"
+        credentials_file: "{{ credentials_file }}"
+        project_id: "{{ gcloud.project_id }}"
+        zone: "{{ zone }}"
+
+    - name: create standard instance
+      gce:
+        instance_names: "{{ ginstance_name | default('auto-vds-ansible') }}"
+        disk_auto_delete: true
+        disks:
+          - name: "{{ disk_name }}"
+            mode: READ_WRITE
+        zone: "{{ zone }}"
+        machine_type: "{{ machine_type }}"
+        image: "{{ image }}"
+        state: present
+        service_account_email: "{{ gcloud.client_email }}"
+        credentials_file: "{{ credentials_file }}"
+        project_id: "{{ gcloud.project_id }}"
+        tags: webserver
+      register: gce
+
+    - name: Fix .ssh/known_hosts.
+      local_action: command  ssh-keygen -f "~/.ssh/known_hosts" -R {{ item.public_ip }}
+      with_items: "{{ gce.instance_data }}"
+
+    - name: Wait for SSH to come up
+      wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=600
+      with_items: "{{ gce.instance_data }}"
+
+    - name: Add host to groupname
+      add_host: hostname={{ item.public_ip }} groupname=new_instances
+      with_items: "{{ gce.instance_data }}"
+
+- name: Setup newly created instance
+  hosts: new_instances
+  become: yes
+  become_method : sudo
+  roles:
+    - common-server
+    - java
+    - nifi
+    - openrefine
+    - superset
+    - h2o
+    - anaconda

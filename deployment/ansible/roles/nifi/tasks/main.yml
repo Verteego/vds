@@ -1,0 +1,55 @@
+---
+- name: Setup working directory
+  file:
+    owner: nifi
+    group: nifi
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /opt/nifi
+
+- name: Setup logging directory
+  file:
+    owner: nifi
+    group: nifi
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /var/log/nifi
+
+- shell: /bin/rm -rf /opt/nifi/*
+
+- unarchive:
+    extra_opts: ['--strip=1']
+    src: https://storage.googleapis.com/verteego-vds/nifi/nifi-assembly/target/nifi-1.1.0-SNAPSHOT-bin.tar.gz
+    owner: nifi
+    group: nifi
+    dest: /opt/nifi
+    remote_src: True
+
+- file:
+    path: /opt/nifi
+    owner: nifi
+    group: nifi
+    recurse: yes
+
+- name: Sync config and scripts
+  template: src={{item.src}} dest={{item.dest}}
+  with_items:
+    - { src: 'templates/nifi.properties.j2', dest: '/opt/nifi/conf/nifi.properties', owner: nifi, group: nifi }
+    - { src: 'templates/bootstrap.conf.j2', dest: '/opt/nifi/conf/bootstrap.conf', owner: nifi, group: nifi }
+    - { src: 'templates/nifi-env.sh.j2', dest: '/opt/nifi/bin/nifi-env.sh', owner: nifi, group: nifi }
+
+- name: Copy Nifi service script
+  template: src={{item.src}} dest={{item.dest}} mode='u=rwx,g=rx,o=rx'
+  with_items:
+    - { src: 'templates/systemd/nifi.service.j2', dest: '/lib/systemd/system/nifi.service'}
+
+- name: enable nifi service at startup
+  systemd:
+    name: nifi
+    enabled: yes
+    masked: no
+
+- systemd:
+    state: restarted
+    daemon_reload: yes
+    name: nifi

@@ -1,0 +1,8 @@
+---
+# handlers
+- name: reload sysctl
+  command: sysctl -p
+
+- name: update timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+

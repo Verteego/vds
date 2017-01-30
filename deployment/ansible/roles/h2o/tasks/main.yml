@@ -1,0 +1,39 @@
+---
+- name: Setup working directory
+  file:
+    owner: h2o
+    group: h2o
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /opt/h2o
+
+- name: Setup logging directory
+  file:
+    owner: h2o
+    group: h2o
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /var/log/h2o
+
+- unarchive:
+    src: https://storage.googleapis.com/verteego-vds/h2o/build/h2o.tar.gz
+    dest: /opt/h2o
+    owner: h2o
+    group: h2o
+    remote_src: True
+
+- name: Copy h2o service script
+  template: src={{item.src}} dest={{item.dest}} mode='u=rwx,g=rx,o=rx'
+  with_items:
+    - { src: 'templates/systemd/h2o.service.j2', dest: '/lib/systemd/system/h2o.service'}
+
+- name: enable h2o service at startup
+  systemd:
+    name: h2o
+    enabled: yes
+    masked: no
+
+- systemd:
+    state: restarted
+    daemon_reload: yes
+    name: h2o

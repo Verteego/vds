@@ -1,0 +1,27 @@
+---
+- name: Hostname setup
+  hosts: Cluster
+  gather_facts: False
+  become: True
+  tasks:
+    - name: Hostname
+      hostname: name={{ vname }}
+    - name: Reverse lookup hostname
+      lineinfile:
+        dest: /etc/hosts
+        state: present
+        regexp: '^127.0.0.1\s+localhost'
+        line: '127.0.0.1 localhost'
+
+- name: Common setup
+  hosts: Cluster
+  gather_facts: False
+  become: True
+  roles:
+    - common-server
+    - java
+    - nifi
+    - openrefine
+    - superset
+    - h2o
+    - anaconda

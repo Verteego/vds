@@ -1,0 +1,10 @@
+[Unit]
+Description=Superset
+[Service]
+User=superset
+Group=superset
+PIDFile=/var/run/superset.pid
+ExecStart=/opt/superset/venv/bin/superset runserver -p {{ superset.host.port }} -a {{ superset.host.ip }}
+ExecStop=/bin/kill -HUP $MAINPID
+[Install]
+WantedBy=multi-user.target

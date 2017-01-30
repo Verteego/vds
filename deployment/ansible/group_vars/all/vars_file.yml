@@ -1,0 +1,47 @@
+superset:
+  admin:
+    username    : "vds-user"
+    first_name  : "vds"
+    last_name   : "user"
+    email       : "vds-user@verteego.com"
+    password    : "verteego"
+  host:
+    ip  : "0.0.0.0"
+    port: "33330"
+    public_address : "192.168.90.123"
+  nifi:
+    uri: "nifi"
+  h2o:
+    uri: ""
+  openrefine:
+    uri: ""
+  anaconda:
+    uri: "tree"
+
+nifi :
+  host:
+    ip  : "0.0.0.0"
+    port: "33331"
+  java:
+    Xmx: "2g"
+  log_dir: "/var/log/nifi"
+
+openrefine :
+  host:
+    ip  : "0.0.0.0"
+    port: "33332"
+  java:
+    Xmx: "2g"
+
+h2o :
+  host:
+    ip  : "0.0.0.0"
+    port: "33333"
+  java:
+    Xmx: "2g"
+  log_dir: "/var/log/h2o"
+
+anaconda :
+  host:
+    ip  : "0.0.0.0"
+    port: "33335"

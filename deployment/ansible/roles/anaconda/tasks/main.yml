@@ -1,0 +1,109 @@
+---
+- name: Setup working directory
+  file:
+    owner: anaconda
+    group: anaconda
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /opt/anaconda
+
+- name: Setup logging directory
+  file:
+    owner: anaconda
+    group: anaconda
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /var/log/anaconda
+
+- name: Setup jupyter directory
+  file:
+    owner: anaconda
+    group: anaconda
+    mode: u=rwx,g=rx,o=rx
+    state: directory
+    path: /home/anaconda/.jupyter
+
+- name: download anaconda installer
+  get_url:
+    url: "https://repo.continuum.io/archive/Anaconda3-4.2.0-Linux-x86_64.sh"
+    dest: /tmp/anaconda.sh
+    mode: 0755
+  become: yes
+  become_user: anaconda
+
+- command: /bin/rm -rf /opt/anaconda/anaconda3
+
+- name: install anaconda
+  shell: /tmp/anaconda.sh -b -p /opt/anaconda/anaconda3
+  become: yes
+  become_user: anaconda
+
+- name: update pip
+  shell: /opt/anaconda/anaconda3/bin/pip install -U pip
+  become: yes
+  become_user: anaconda
+
+
+- name: Install R kernel
+  shell: /opt/anaconda/anaconda3/bin/conda install -c r r-essentials -y
+  async: 3600
+  poll: 10
+  register: r_install_sleeper
+  become: yes
+  become_user: anaconda
+
+- name: 'r install - check on fire and forget task'
+  async_status: jid={{ r_install_sleeper.ansible_job_id }}
+  register: job_result
+  until: job_result.finished
+  retries: 60
+  become: yes
+  become_user: anaconda
+
+- name: update conda to latest version
+  shell: /opt/anaconda/anaconda3/bin/conda update conda -y
+  become: yes
+  become_user: anaconda
+
+- name: update conda to latest version
+  shell: /opt/anaconda/anaconda3/bin/conda install -c conda-forge nb_conda_kernels -y
+  become: yes
+  become_user: anaconda
+
+- name: Install Python 2 ipykernel
+  shell:  /opt/anaconda/anaconda3/bin/conda create -n py27 python=2.7 ipykernel -y
+
+- name: Install Bash kernel
+  shell:  /opt/anaconda/anaconda3/bin/pip3.5 install bash_kernel
+  become: yes
+  become_user: anaconda
+
+- name: Install Bash kernel
+  shell:  /opt/anaconda/anaconda3/bin/python3.5 -m bash_kernel.install
+  become: yes
+  become_user: anaconda
+
+- lineinfile:
+    dest: /home/anaconda/.bashrc
+    state: present
+    regexp: '^PATH='
+    line: 'PATH=/opt/anaconda/anaconda3/bin:$PATH'
+    state: present
+    owner: anaconda
+
+- name: Copy anaconda service script
+  template: src={{item.src}} dest={{item.dest}} mode='u=rwx,g=rx,o=rx' owner={{item.owner}} group={{item.owner}}
+  with_items:
+    - { src: 'templates/systemd/anaconda.service.j2', dest: '/lib/systemd/system/anaconda.service', owner: root, group: root}
+    - { src: 'templates/jupyter_notebook_config.py.j2', dest: '/home/anaconda/.jupyter/jupyter_notebook_config.py', owner: anaconda, group: anaconda}
+
+- name: enable anaconda service at startup
+  systemd:
+    name: anaconda
+    enabled: yes
+    masked: no
+
+- systemd:
+    state: restarted
+    daemon_reload: yes
+    name: anaconda
