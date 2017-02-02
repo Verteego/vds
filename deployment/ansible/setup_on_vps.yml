@@ -1,0 +1,13 @@
+---
+- name: VPS vds Install
+  hosts: all
+  gather_facts: False
+  become: True
+  roles:
+    - common-server
+    - java
+    - nifi
+    - openrefine
+    - superset
+    - h2o
+    - anaconda
