@@ -72,6 +72,8 @@
 
 - name: Install Python 2 ipykernel
   shell:  /opt/anaconda/anaconda3/bin/conda create -n py27 python=2.7 ipykernel -y
+  become: yes
+  become_user: anaconda
 
 - name: Install Bash kernel
   shell:  /opt/anaconda/anaconda3/bin/pip3.5 install bash_kernel
