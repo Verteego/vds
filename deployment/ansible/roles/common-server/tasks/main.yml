@@ -10,15 +10,22 @@
     - build-essential
     - libssl-dev
     - libffi-dev
-    - python-dev
-    - python-pip
+    - libxml2-dev
+    - libxslt1-dev
     - libsasl2-dev
     - libldap2-dev
+    - libfreetype6-dev
+    - libopenblas-dev
+    - liblapack-dev
+    - gfortran
+    - python-dev
+    - python-pip
     - python-setuptools
     - python-virtualenv
     - python-pip
     - python-numpy
     - python-scipy
+    - python-cairo
     - htop
     - tmux
     - iotop
