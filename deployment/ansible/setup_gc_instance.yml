@@ -7,6 +7,7 @@
     disk_size: "{{ gdisk_size | default(20) }}"
     disk_name: "{{ gdisk_name | default('custom-disk-1') }}"
     image: debian-8-jessie-v20161215
+    firewall_tag: "vds"
     credentials_file: "files/ansible.json"
   tasks:
     - shell: cat "{{ credentials_file }}"
@@ -26,6 +27,17 @@
         project_id: "{{ gcloud.project_id }}"
         zone: "{{ zone }}"
 
+    - name: Create Firewall Rule w/allowed port Range and tag
+      gce_net:
+        name: default
+        credentials_file: "{{ credentials_file }}"
+        fwname: "{{ firewall_tag }}"
+        service_account_email: "{{ gcloud.client_email }}"
+        project_id: "{{ gcloud.project_id }}"
+        allowed: tcp:33330-33335
+        state: "present"
+        src_range: ['0.0.0.0/0']
+
     - name: create standard instance
       gce:
         instance_names: "{{ ginstance_name | default('auto-vds-ansible') }}"
@@ -40,7 +52,7 @@
         service_account_email: "{{ gcloud.client_email }}"
         credentials_file: "{{ credentials_file }}"
         project_id: "{{ gcloud.project_id }}"
-        tags: webserver
+        tags: "{{ firewall_tag }}"
       register: gce
 
     - name: Fix .ssh/known_hosts.
