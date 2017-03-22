@@ -8,7 +8,6 @@ superset:
   host:
     ip  : "0.0.0.0"
     port: "33330"
-    public_address : "192.168.90.123"
   nifi:
     uri: "nifi"
   h2o:
