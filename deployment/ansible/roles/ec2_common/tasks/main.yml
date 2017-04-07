@@ -1,0 +1,48 @@
+---
+- name: Create a VPC
+  ec2_vpc:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    cidr_block: 10.0.0.0/16
+    dns_hostnames: yes
+    dns_support: yes
+    instance_tenancy: default
+    internet_gateway: yes
+    region: "{{ region }}"
+    resource_tags: { "Environment":"Development", "Name" :"vds_vpc"}
+    route_tables:
+      - subnets:
+          - 10.0.0.0/24
+        routes:
+          - dest: 0.0.0.0/0
+            gw: igw
+    state: present
+    subnets:
+      - cidr: 10.0.0.0/24
+        resource_tags: { "Environment":"Development", "Name" : "Public subnet" }
+      - cidr: 10.0.1.0/24
+        resource_tags: { "Environment":"Development", "Name" : "Private subnet" }
+    wait: true
+  register: vpc
+
+- name: Create a security group
+  ec2_group:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    name: "{{ security_group }}"
+    description: Security Group for spark servers
+    region: "{{ region }}"
+    vpc_id: "{{ vpc.vpc_id }}"
+    rules:
+      - proto: tcp
+        from_port: 0
+        to_port: 65000
+        cidr_ip: 10.0.0.0/16
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+  register: sec_group

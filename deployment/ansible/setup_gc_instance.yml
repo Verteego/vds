@@ -8,7 +8,7 @@
     disk_name: "{{ gdisk_name | default('custom-disk-1') }}"
     image: debian-8-jessie-v20161215
     firewall_tag: "vds"
-    credentials_file: "files/ansible.json"
+    credentials_file: "files/gcp/ansible.json"
   tasks:
     - shell: cat "{{ credentials_file }}"
       register: result

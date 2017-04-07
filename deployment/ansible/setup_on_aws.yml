@@ -1,0 +1,140 @@
+---
+- name: Start EC2 Instances
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    id: vds-instance-100
+    aws_key_file: "files/aws/vds.pem"
+    instances_count: 1
+    keypair: vds
+    security_group: vds
+    image: ami-11c57862
+    region: eu-west-1
+    instance_type: t2.medium
+    group: AwsVdsInstance
+    storage_size: 40
+    keys_file: "files/aws/keys.json"
+  tasks:
+    - shell: cat "{{ keys_file }}"
+      register: result
+    - set_fact: awsKeys="{{ result.stdout | from_json }}"
+    - debug: var=awsKeys.aws_access_key
+    - debug: var=awsKeys.aws_secret_key
+
+    - name: Create a VPC
+      ec2_vpc:
+        aws_access_key: "{{ awsKeys.aws_access_key }}"
+        aws_secret_key: "{{ awsKeys.aws_secret_key }}"
+        cidr_block: 10.0.0.0/16
+        dns_hostnames: yes
+        dns_support: yes
+        instance_tenancy: default
+        internet_gateway: yes
+        region: "{{ region }}"
+        resource_tags: { "Environment":"Development", "Name" :"vds_vpc"}
+        route_tables:
+          - subnets:
+              - 10.0.0.0/24
+            routes:
+              - dest: 0.0.0.0/0
+                gw: igw
+        state: present
+        subnets:
+          - cidr: 10.0.0.0/24
+            resource_tags: { "Environment":"Development", "Name" : "Public subnet" }
+          - cidr: 10.0.1.0/24
+            resource_tags: { "Environment":"Development", "Name" : "Private subnet" }
+        wait: true
+      register: vpc
+
+    - name: Create a security group
+      ec2_group:
+        aws_access_key: "{{ awsKeys.aws_access_key }}"
+        aws_secret_key: "{{ awsKeys.aws_secret_key }}"
+        name: "{{ security_group }}"
+        description: Security Group for spark servers
+        region: "{{ region }}"
+        vpc_id: "{{ vpc.vpc_id }}"
+        rules:
+          - proto: tcp
+            from_port: 0
+            to_port: 65000
+            cidr_ip: 10.0.0.0/16
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+        rules_egress:
+          - proto: all
+            cidr_ip: 0.0.0.0/0
+      register: sec_group
+
+    - name: Launch EC2 instance
+      ec2:
+        id: "{{ id }}"
+        aws_access_key: "{{ awsKeys.aws_access_key }}"
+        aws_secret_key: "{{ awsKeys.aws_secret_key }}"
+        group: "{{ security_group }}"
+        instance_type: "{{ instance_type }}"
+        image: "{{ image }}"
+        wait: true
+        wait_timeout: 500
+        region: "{{ region }}"
+        keypair: "{{ keypair }}"
+        assign_public_ip: yes
+        vpc_subnet_id: "{{ vpc.subnets[0].id}}"
+        wait: yes
+        state: present
+      register: ec2
+
+    - name: Add storage volume
+      ec2_vol:
+        aws_access_key: "{{ awsKeys.aws_access_key }}"
+        aws_secret_key: "{{ awsKeys.aws_secret_key }}"
+        device_name: /dev/xvdb
+        volume_type: gp2
+        volume_size: "{{ storage_size }}"
+        region: "{{ region }}"
+        instance: "{{ item.id }}"
+      with_items: "{{ ec2.instances }}"
+      when: (storage_size is defined) and (storage_size > 0)
+
+    - name: Add tag to Instance(s)
+      ec2_tag:
+        aws_access_key: "{{ awsKeys.aws_access_key }}"
+        aws_secret_key: "{{ awsKeys.aws_secret_key }}"
+        resource : "{{ item.id }}"
+        region : "{{ region }}"
+        state : present
+      with_items: "{{ ec2.instances }}"
+      args:
+        tags:
+          Name: "{{ group }}"
+
+    - name: Add new instance to host group
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: launched
+      with_items: "{{ ec2.instances }}"
+
+    - name: Wait for SSH to come up
+      wait_for:
+        host: "{{ item.public_dns_name }}"
+        port: 22
+        delay: 60
+        timeout: 320
+        state: started
+      with_items: "{{ ec2.instances }}"
+
+- name: Configure instance(s)
+  hosts: launched
+  become: yes
+  roles:
+    - common-server
+    - java
+    - nifi
+    - openrefine
+    - superset
+    - h2o
+    - anaconda

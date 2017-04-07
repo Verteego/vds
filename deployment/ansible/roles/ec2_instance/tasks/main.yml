@@ -1,0 +1,57 @@
+---
+- name: Launch EC2 instance
+  ec2:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    group: "{{ security_group }}"
+    instance_type: "{{ instance_type }}"
+    image: "{{ image }}"
+    wait: true
+    region: "{{ region }}"
+    keypair: "{{ keypair }}"
+    assign_public_ip: yes
+    vpc_subnet_id: "{{ vpc.subnets[0].id}}"
+    count: "{{ instances_count }}"
+  register: ec2
+
+- name: Add new instance to host group
+  add_host:
+    hostname: "{{ item.public_ip }}"
+    groupname: launched
+  with_items: "{{ ec2.instances }}"
+
+- name: Wait for SSH to come up
+  wait_for: host="{{ item.public_ip }}" port=22 delay=60 timeout=320 state=started
+  with_items: "{{ ec2.instances }}"
+
+- name: Add storage volume
+  ec2_vol:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    device_name: /dev/xvdb
+    volume_type: gp2
+    volume_size: "{{ storage_size }}"
+    region: "{{ region }}"
+    instance: "{{ item.id }}"
+  with_items: "{{ ec2.instances }}"
+  when: (storage_size is defined) and (storage_size > 0)
+
+- name: Add tag to Instance(s)
+  ec2_tag:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    resource : "{{ item.id }}"
+    region : "{{ region }}"
+    state : present
+  with_items: "{{ ec2.instances }}"
+  args:
+    tags:
+      Name: "{{ group }}"
+
+- name: Add the newly created EC2 instance(s) to the local host group (located inside the directory)
+  lineinfile:
+    dest="./hosts"
+    regexp="{{ item.public_dns_name }} ansible_host={{ item.public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file={{ aws_key_file }}"
+    insertafter="{{ group }}"
+    line="{{ item.public_dns_name }} ansible_host={{ item.public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file={{ aws_key_file }}"
+  with_items: "{{ ec2.instances }}"
