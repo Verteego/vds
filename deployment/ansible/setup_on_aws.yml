@@ -4,7 +4,6 @@
   connection: local
   gather_facts: False
   vars:
-    id: vds-instance-100
     aws_key_file: "files/aws/vds.pem"
     instances_count: 1
     keypair: vds
@@ -13,7 +12,7 @@
     region: eu-west-1
     instance_type: t2.medium
     group: AwsVdsInstance
-    storage_size: 40
+    storage_size: 50
     keys_file: "files/aws/keys.json"
   tasks:
     - shell: cat "{{ keys_file }}"
@@ -72,7 +71,6 @@
 
     - name: Launch EC2 instance
       ec2:
-        id: "{{ id }}"
         aws_access_key: "{{ awsKeys.aws_access_key }}"
         aws_secret_key: "{{ awsKeys.aws_secret_key }}"
         group: "{{ security_group }}"
@@ -86,6 +84,11 @@
         vpc_subnet_id: "{{ vpc.subnets[0].id}}"
         wait: yes
         state: present
+        volumes:
+          - device_name: /dev/xvda
+            volume_type: gp2
+            volume_size: 50
+            delete_on_termination: true
       register: ec2
 
     - name: Add storage volume
@@ -130,6 +133,7 @@
 - name: Configure instance(s)
   hosts: launched
   become: yes
+  become_method: sudo
   roles:
     - common-server
     - java
