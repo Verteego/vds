@@ -8,10 +8,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.hostmanager.manage_host = true
   config.hostmanager.enabled = true
+  config.ssh.insert_key = false
+  config.ssh.private_key_path = ['~/.vagrant.d/insecure_private_key']
 
   config.vm.define "vds" do |vds|
     vds.vm.box = "debian/jessie64"
-    #vds.disksize.size = '20GB'
+    vds.disksize.size = '20GB'
     vds.vm.network "private_network", ip: "192.168.90.123"
     vds.vm.hostname = "vds.verteego.local"
     vds.vm.provider :virtualbox do |vb|
