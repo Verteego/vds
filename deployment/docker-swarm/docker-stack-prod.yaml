@@ -1,0 +1,137 @@
+version: "3"
+services:
+  visualizer:
+    image: dockersamples/visualizer
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 100M
+        reservations:
+          cpus: '0.1'
+          memory: 150M
+
+  zookeeper:
+    image: zookeeper
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 500M
+        reservations:
+          cpus: '0.15'
+          memory: 250M
+
+  h2o:
+    image: vdshub/h2o
+    ports:
+        - "33333:33333"
+    command: supervisord
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 500M
+        reservations:
+          cpus: '0.15'
+          memory: 250M
+
+  nifi:
+    image: vdshub/nifi
+    ports:
+        - "33331:33331"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == worker2
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 2G
+        reservations:
+          cpus: '0.50'
+          memory: 1G
+
+  openrefine:
+    image: vdshub/openrefine
+    command: /opt/openrefine/start.sh
+    ports:
+        - "33332:33332"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 750M
+        reservations:
+          cpus: '0.4'
+          memory: 750M
+
+  superset:
+    image: vdshub/superset
+    ports:
+        - "33330:8088"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 500M
+        reservations:
+          cpus: '0.25'
+          memory: 500M
+
+  jupyter:
+    image: vdshub/jupyter
+    ports:
+        - "33335:33335"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 500M
+        reservations:
+          cpus: '0.25'
+          memory: 500M
+
+#volumes:
+#  registry:
+#    driver: rexray
+#  h2o:
+#    driver: rexray
+#  nifi:
+#    driver: rexray
+#  openrefine:
+#    driver: rexray
+#  superset:
+#    driver: rexray
+#  anaconda:
+#    driver: rexray
+

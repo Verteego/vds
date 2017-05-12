@@ -6,4 +6,7 @@
 vagrant_1.8.0_x86_64.deb
 venv
 configuration
+ansible.json
 *.pem
+publish-local.sh
+publish-prod.sh

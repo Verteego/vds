@@ -1,0 +1,8 @@
+NIFI_PORT = "{{ nifi.host.port }}"
+NIFI_URI = "{{ superset.nifi.uri }}"
+OPENREFINE_PORT = "{{ openrefine.host.port }}"
+OPENREFINE_URI = "{{ superset.openrefine.uri }}"
+ANACONDA_PORT = "{{ anaconda.host.port }}"
+ANACONDA_URI = "{{ superset.anaconda.uri }}"
+H2O_PORT = "{{ h2o.host.port }}"
+H2O_URI = "{{ superset.h2o.uri }}"

@@ -1,0 +1,7 @@
+nifi :
+  host:
+    ip  : "0.0.0.0"
+    port: "33331"
+  java:
+    Xmx: "2g"
+  log_dir: "/var/log/nifi"

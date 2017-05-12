@@ -1,0 +1,159 @@
+version: "3"
+services:
+#  register:
+#    image: registry:2
+#    ports:
+#      - "5000:5000"
+#    deploy:
+#      replicas: 1
+#      placement:
+#        constraints:
+#          - node.role == manager
+#      resources:
+#        limits:
+#          cpus: '0.1'
+#          memory: 100M
+#        reservations:
+#          cpus: '0.1'
+#          memory: 150M
+
+  visualizer:
+    image: dockersamples/visualizer
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 100M
+        reservations:
+          cpus: '0.1'
+          memory: 150M
+
+  zookeeper:
+    image: zookeeper
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 500M
+        reservations:
+          cpus: '0.15'
+          memory: 250M
+
+#  h2o:
+##    image: verteego/h2o
+#    image: localhost:5000/h2o
+#    ports:
+#        - "33333:33333"
+##    volumes:
+##      - h2o:/tmp/h2o
+#    command: supervisord
+#    deploy:
+#      replicas: 1
+#      placement:
+#        constraints:
+#          - node.role == worker
+#      resources:
+#        limits:
+#          cpus: '0.25'
+#          memory: 500M
+#        reservations:
+#          cpus: '0.15'
+#          memory: 250M
+#
+#  nifi:
+##    image: verteego/nifi
+#    image: localhost:5000/nifi:latest
+#    ports:
+#        - "33331:33331"
+#    deploy:
+#      replicas: 1
+#      placement:
+#        constraints:
+#          - node.role == manager
+#      resources:
+#        limits:
+#          cpus: '0.75'
+#          memory: 1G
+#        reservations:
+#          cpus: '0.50'
+#          memory: 1G
+#
+#  openrefine:
+#    image: localhost:5000/openrefine
+#    command: /opt/openrefine/start.sh
+#    ports:
+#        - "33332:33332"
+#    deploy:
+#      replicas: 1
+#      placement:
+#        constraints:
+#          - node.role == worker
+#      resources:
+#        limits:
+#          cpus: '0.75'
+#          memory: 1G
+#        reservations:
+#          cpus: '0.50'
+#          memory: 1G
+#
+  superset:
+#    image: localhost:5000/superset:latest
+    image: vdshub/superset
+    ports:
+        - "33330:8088"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 500M
+        reservations:
+          cpus: '0.5'
+          memory: 500M
+
+  jupyter:
+    image: vdshub/jupyter
+    ports:
+        - "8888:8088"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 500M
+        reservations:
+          cpus: '0.5'
+          memory: 500M
+
+#volumes:
+#  registry:
+#    driver: rexray
+#  h2o:
+#    driver: rexray
+#  nifi:
+#    driver: rexray
+#  openrefine:
+#    driver: rexray
+#  superset:
+#    driver: rexray
+#  anaconda:
+#    driver: rexray
+
