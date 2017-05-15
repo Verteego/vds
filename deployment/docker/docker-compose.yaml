@@ -1,0 +1,28 @@
+version: "3"
+services:
+  superset:
+    image: vdshub/superset
+    ports:
+        - "33330:8088"
+
+  nifi:
+    image: vdshub/nifi
+    ports:
+        - "33331:33331"
+
+  openrefine:
+    image: vdshub/openrefine
+    command: /opt/openrefine/start.sh
+    ports:
+        - "33332:33332"
+
+  jupyter:
+    image: vdshub/jupyter
+    ports:
+        - "33335:33335"
+
+  h2o:
+    image: vdshub/h2o
+    ports:
+        - "33333:33333"
+    command: supervisord
