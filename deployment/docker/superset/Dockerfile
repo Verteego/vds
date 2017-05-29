@@ -50,6 +50,7 @@ RUN jinja2  /tmp/create-user.sh.j2 /tmp/vars_file.yml --format=yml > /tmp/create
 
 USER superset
 RUN expect /tmp/create-user.sh
+RUN superset db upgrade
 
 # Deploy
 EXPOSE 8088
